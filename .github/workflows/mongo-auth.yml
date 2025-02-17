@@ -21,7 +21,7 @@ jobs:
         id: create-project
         uses: mongodb/atlas-github-action@v0.2.0
         with:
-          create-project-name: test-setup-project
+          create-project-name: test-setup-project-new
 
       # Step 2: Set up MongoDB Atlas cluster
       - name: Create Cluster for Authentication Test
