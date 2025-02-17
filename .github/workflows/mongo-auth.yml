@@ -1,0 +1,39 @@
+name: MongoDB Atlas Authentication & Cluster Creation
+
+on:
+  push:
+    branches:
+      - main  # Trigger on push to the main branch (or any other branch you prefer)
+
+env:
+  MONGODB_ATLAS_PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
+  MONGODB_ATLAS_PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
+  MONGODB_ATLAS_ORG_ID: ${{ secrets.ORG_ID }} # default organization ID
+  MONGODB_ATLAS_PROJECT_ID: ${{ secrets.PROJECT_ID }} # default project ID
+
+jobs:
+  mongo_operations:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Set up AtlasCLI and create a project
+      - name: Setup AtlasCLI and create a project
+        id: create-project
+        uses: mongodb/atlas-github-action@v0.2.0
+        with:
+          create-project-name: test-setup-project
+
+      # Step 2: Set up MongoDB Atlas cluster
+      - name: Create Cluster for Authentication Test
+        id: setup-cluster
+        uses: mongodb/atlas-github-action@v0.2.0
+        with:
+          run-setup: true
+          project-id: ${{ steps.create-project.outputs.create-project-id }}
+          cluster-name: test-cluster
+
+      # Step 3: Retrieve MongoDB Connection String
+      - name: Retrieve Connection String
+        shell: bash
+        run: |
+          echo "MongoDB connection string: ${{ steps.setup-cluster.outputs.connection-string }}"
