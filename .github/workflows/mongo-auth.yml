@@ -30,7 +30,7 @@ jobs:
         with:
           run-setup: true
           project-id: ${{ steps.create-project.outputs.create-project-id }}
-          cluster-name: test-cluster
+          cluster-name: test-cluster-new
 
       # Step 3: Retrieve MongoDB Connection String
       - name: Retrieve Connection String
