@@ -16,7 +16,8 @@ jobs:
       - name: Authenticate and Run MongoDB Commands
         uses: mongodb-js/mongosh-action@v1
         with:
-          connection-string: "mongodb+srv://${{ secrets.MONGO_USER }}:${{ secrets.MONGO_PASS }}@${{ secrets.MONGO_URI }}/?retryWrites=true&w=majority"
+          connection-string: "mongodb+srv://kumaranimesh462:qbj29ybnliUMmpCL@test-cluster-git.nydov.mongodb.net/?retryWrites=true&w=majority&appName=test-cluster-git"
+          # connection-string: "mongodb+srv://${{ secrets.MONGO_USER }}:${{ secrets.MONGO_PASS }}@${{ secrets.MONGO_URI }}/?retryWrites=true&w=majority"
           script: |
             use my_database;
             db.my_collection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
