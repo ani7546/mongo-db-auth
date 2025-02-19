@@ -19,12 +19,12 @@ jobs:
           publicApiKey: ${{ secrets.ATLAS_PUBLIC_KEY }}
           privateApiKey: ${{ secrets.ATLAS_PRIVATE_KEY }}
           projectId: ${{ secrets.ATLAS_PROJECT_ID }}
-          clusterName: "MyCluster"
+          clusterName: "test-cluster-git"
           orgId: "" # Optional
 
       - name: Run MongoDB Commands
         run: |
-          mongosh "mongodb+srv://${{ secrets.MONGO_USER }}:${{ secrets.MONGO_PASS }}@cluster0.mongodb.net/my_database?retryWrites=true&w=majority" --eval '
+          mongosh "mongodb+srv://kumaranimesh462:qbj29ybnliUMmpCL@test-cluster-git.nydov.mongodb.net/?retryWrites=true&w=majority&appName=test-cluster-git" --eval '
             use my_database;
             db.my_collection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
             printjson(db.my_collection.findOne());
