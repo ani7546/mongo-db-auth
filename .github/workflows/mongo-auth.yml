@@ -19,17 +19,25 @@ jobs:
           privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
           projectId: ${{ secrets.PROJECT_ID }}
 
-      # ✅ Install MongoDB Atlas CLI using GitHub module
-      - name: Set up MongoDB Atlas CLI
-        uses: ariga/setup-atlas@v0
-
-      # ✅ Run MongoDB database operations using Atlas CLI
-      - name: Run MongoDB Commands
-        env:
-          MONGO_URI: mongodb+srv://kumaranimesh462:qbj29ybnliUMmpCL@test-cluster-git.nydov.mongodb.net/?retryWrites=true&w=majority&appName=test-cluster-git
+       # ✅ Step 3: Install MongoDB Shell (mongosh)
+      - name: Install MongoDB Shell
         run: |
-          atlas data-lake pipelines list
-          atlas data-lake list
+          curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | sudo tee /usr/share/keyrings/mongodb-server-key.asc
+          echo "deb [signed-by=/usr/share/keyrings/mongodb-server-key.asc] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+          sudo apt update
+          sudo apt install -y mongodb-mongosh
+
+      # ✅ Step 4: Test connection and create database
+      - name: Test MongoDB Connection
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+        run: |
+          mongosh "$MONGO_URI" --eval '
+          use github_test_db;
+          db.test_collection.insertOne({ test: "MongoDB Connection Successful!" });
+          print("✅ Connection Successful and Database Created");
+          '
+
 
 
      
