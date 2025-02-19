@@ -1,31 +1,39 @@
 name: MongoDB Atlas CI/CD
 
-on:
-  push:
-    branches:
-      - main
+on: [push]
 
 jobs:
-  mongodb_atlas:
+  mongodb:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      # ✅ Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: MongoDB Atlas Action
+      # ✅ Authenticate with MongoDB Atlas using GitHub Actions module
+      - name: Authenticate with MongoDB Atlas
         uses: mongodb/atlas-github-action@v0.2.0
         with:
           publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
           privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
           projectId: ${{ secrets.PROJECT_ID }}
-          clusterName: "test-cluster-git"
-          orgId: "" # Optional
 
+      # ✅ Install MongoDB Atlas CLI using GitHub module
+      - name: Set up MongoDB Atlas CLI
+        uses: ariga/setup-atlas@v0
+
+      # ✅ Run MongoDB database operations using Atlas CLI
       - name: Run MongoDB Commands
+        env:
+          MONGO_URI: mongodb+srv://kumaranimesh462:qbj29ybnliUMmpCL@test-cluster-git.nydov.mongodb.net/?retryWrites=true&w=majority&appName=test-cluster-git
         run: |
-          mongosh "mongodb+srv://kumaranimesh462:qbj29ybnliUMmpCL@test-cluster-git.nydov.mongodb.net/?retryWrites=true&w=majority&appName=test-cluster-git" --eval '
-            use my_database;
-            db.my_collection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
-            printjson(db.my_collection.findOne());
+          atlas data-lake pipelines list
+          atlas data-lake list
+
+
+     
+         
+
+
           '
