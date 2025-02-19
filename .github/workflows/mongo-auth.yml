@@ -1,4 +1,4 @@
-name: MongoDB CI/CD Pipeline
+name: MongoDB Atlas CI/CD
 
 on:
   push:
@@ -6,19 +6,26 @@ on:
       - main
 
 jobs:
-  mongodb_operations:
+  mongodb_atlas:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Authenticate and Run MongoDB Commands
-        uses: jakejarvis/mongodb-action@v1
+      - name: MongoDB Atlas Action
+        uses: mongodb/atlas-github-action@v0.2.0
         with:
-          connection-string: "mongodb+srv://kumaranimesh462:qbj29ybnliUMmpCL@test-cluster-git.nydov.mongodb.net/?retryWrites=true&w=majority&appName=test-cluster-git"
-          # connection-string: "mongodb+srv://${{ secrets.MONGO_USER }}:${{ secrets.MONGO_PASS }}@${{ secrets.MONGO_URI }}/?retryWrites=true&w=majority"
-          script: |
+          publicApiKey: ${{ secrets.ATLAS_PUBLIC_KEY }}
+          privateApiKey: ${{ secrets.ATLAS_PRIVATE_KEY }}
+          projectId: ${{ secrets.ATLAS_PROJECT_ID }}
+          clusterName: "MyCluster"
+          orgId: "" # Optional
+
+      - name: Run MongoDB Commands
+        run: |
+          mongosh "mongodb+srv://${{ secrets.MONGO_USER }}:${{ secrets.MONGO_PASS }}@cluster0.mongodb.net/my_database?retryWrites=true&w=majority" --eval '
             use my_database;
             db.my_collection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
             printjson(db.my_collection.findOne());
+          '
