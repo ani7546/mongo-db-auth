@@ -28,15 +28,12 @@ jobs:
           sudo apt install -y mongodb-mongosh
 
       # ✅ Step 4: Test connection and create database
-      - name: Test MongoDB Connection
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+      - name: Run MongoDB Commands
         run: |
-          mongosh "$MONGO_URI" --eval '
-          use github_test_db;
-          db.test_collection.insertOne({ test: "MongoDB Connection Successful!" });
-          print("✅ Connection Successful and Database Created");
-          '
+         mongosh "${{ secrets.MONGO_URI }}" --eval "
+         use github_test_db;
+         db.test_collection.insertOne({name: 'GitHub Actions Test', createdAt: new Date()});
+         "
 
 
 
