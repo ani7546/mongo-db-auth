@@ -31,7 +31,7 @@ jobs:
       - name: Run MongoDB Commands
         run: |
          mongosh "${{ secrets.MONGO_URI }}" --eval "
-         use github_test_db;
+         db = db.getSiblingDB('github_test');
          db.test_collection.insertOne({name: 'GitHub Actions Test'});
          "
 
