@@ -1,6 +1,9 @@
 name: MongoDB Atlas CI/CD
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   mongodb:
