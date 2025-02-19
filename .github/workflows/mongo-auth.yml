@@ -16,9 +16,9 @@ jobs:
       - name: MongoDB Atlas Action
         uses: mongodb/atlas-github-action@v0.2.0
         with:
-          publicApiKey: ${{ secrets.ATLAS_PUBLIC_KEY }}
-          privateApiKey: ${{ secrets.ATLAS_PRIVATE_KEY }}
-          projectId: ${{ secrets.ATLAS_PROJECT_ID }}
+          publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
+          privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
+          projectId: ${{ secrets.PROJECT_ID }}
           clusterName: "test-cluster-git"
           orgId: "" # Optional
 
