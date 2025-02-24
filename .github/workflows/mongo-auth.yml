@@ -21,7 +21,7 @@ jobs:
       # Step 3: Authenticate with MongoDB Atlas
       - name: Authenticate with Atlas
         run: |
-          atlas auth login --apiKey "${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}"
+          atlas config init --publicApiKey "${{ secrets.PUBLIC_API_KEY }}" --privateApiKey "${{ secrets.PRIVATE_API_KEY }}"
 
 
       # Step 3: Retrieve Cluster Connection String
