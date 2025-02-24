@@ -26,14 +26,6 @@ jobs:
           atlas config set org_id "${{ secrets.ORG_ID }}"
           atlas config set project_id "${{ secrets.PROJECT_ID }}"
 
-
-      # Step 3: Retrieve Cluster Connection String
-      - name: Retrieve Cluster Connection String
-        id: get-connection
-        run: |
-          CONNECTION_STRING=$(atlas clusters connectionStrings describe "test-cluster-git" --projectId ${{ secrets.PROJECT_ID }} --output json | grep -o '"standardSrv": *"[^"]*' | grep -o '[^"]*$')
-          echo "connection_string=$CONNECTION_STRING" >> $GITHUB_ENV
-
       # Step 4: Install MongoDB Shell (mongosh)
       - name: Install MongoDB Shell
         run: |
@@ -45,4 +37,4 @@ jobs:
       # Step 5: Execute Query from File
       - name: Execute Query from File
         run: |
-          mongosh "$connection_string/test_collection?authSource=admin" query.js
+          mongosh "${{ secrets.MONGO_URI }}" query.js
