@@ -14,15 +14,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup MongoDB Atlas CLI
-        uses: mongodb/atlas-github-action@v0.2.0
-         
-      - name: Authenticate with Atlas
-        run: |
-          atlas config set public_api_key "${{ secrets.PUBLIC_API_KEY }}"
-          atlas config set private_api_key "${{ secrets.PRIVATE_API_KEY }}"
-          atlas config set org_id "${{ secrets.ORG_ID }}"
-          atlas config set project_id "${{ secrets.PROJECT_ID }}"
+      - name: Authenticate with Atlas CLI
+        uses: andreaangiolillo/atlas-cli-github-action@v1.1.0
+        with:
+          public-key: ${{ secrets.PUBLIC_API_KEY }}
+          private-key: ${{ secrets.PRIVATE_API_KEY }}
+          org-id: ${{ secrets.ORG_ID }}        
+          project-id: ${{ secrets.PROJECT_ID }} 
   
       - name: Setup mongo tools - only shell
         uses: boly38/action-mongo-tools@stable
