@@ -26,11 +26,11 @@ jobs:
           atlas config set org_id "${{ secrets.ORG_ID }}"
           atlas config set project_id "${{ secrets.PROJECT_ID }}"
    
-      # Step 4: Set up MongoDB Shell (mongosh) using boly38/action-mongo-tools
-      - name: Setup MongoDB Tools
+      - name: Setup mongo tools - only shell
         uses: boly38/action-mongo-tools@stable
         with:
-          mongosh_version: '2.1.5'  # Specify the desired mongosh version (adjust as needed)
+          mongo-shell: "true"
+          mongo-tools: "false"
 
       # Step 5: Execute Query from File
       - name: Execute Query from File
