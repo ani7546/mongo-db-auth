@@ -26,14 +26,16 @@ jobs:
           atlas config set org_id "${{ secrets.ORG_ID }}"
           atlas config set project_id "${{ secrets.PROJECT_ID }}"
    
-      # Step 4: Use boly38/action-mongo-tools to execute the query
-      - name: Execute MongoDB Query
+      # Step 4: Set up MongoDB Shell (mongosh) using boly38/action-mongo-tools
+      - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
-          connection-string: "${{ secrets.MONGO_URI }}"
-          command: |
-            use github_test;
-            db.test_collection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
+          mongosh_version: '2.1.5'  # Specify the desired mongosh version (adjust as needed)
+
+      # Step 5: Execute Query from File
+      - name: Execute Query from File
+        run: |
+          mongosh "${{ secrets.MONGO_URI }}" query.js
 
       # # Step 4: Install MongoDB Shell (mongosh)
       # - name: Install MongoDB Shell
