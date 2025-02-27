@@ -32,8 +32,8 @@ jobs:
         with:
           connection-string: "${{ secrets.MONGO_URI }}"
           command: |
-            use mydatabase;
-            db.mycollection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
+            use github_test;
+            db.test_collection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
 
       # # Step 4: Install MongoDB Shell (mongosh)
       # - name: Install MongoDB Shell
