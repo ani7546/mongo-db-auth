@@ -10,42 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up MongoDB Atlas CLI
       - name: Setup MongoDB Atlas CLI
         uses: mongodb/atlas-github-action@v0.2.0
-        
-      # Step 3: Authenticate with MongoDB Atlas
+         
       - name: Authenticate with Atlas
         run: |
           atlas config set public_api_key "${{ secrets.PUBLIC_API_KEY }}"
           atlas config set private_api_key "${{ secrets.PRIVATE_API_KEY }}"
           atlas config set org_id "${{ secrets.ORG_ID }}"
           atlas config set project_id "${{ secrets.PROJECT_ID }}"
-   
+  
       - name: Setup mongo tools - only shell
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
 
-      # Step 5: Execute Query from File
       - name: Execute Query from File
         run: |
           mongosh "${{ secrets.MONGO_URI }}" query.js
 
-      # # Step 4: Install MongoDB Shell (mongosh)
-      # - name: Install MongoDB Shell
-      #   run: |
-      #     wget -qO - https://pgp.mongodb.com/server-6.0.asc | sudo tee /usr/share/keyrings/mongodb-server-key.asc
-      #     echo "deb [signed-by=/usr/share/keyrings/mongodb-server-key.asc] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-      #     sudo apt update
-      #     sudo apt install -y mongodb-mongosh
-
-      # # Step 5: Execute Query from File
-      # - name: Execute Query from File
-      #   run: |
-      #     mongosh "${{ secrets.MONGO_URI }}" query.js
+    
