@@ -25,16 +25,23 @@ jobs:
           atlas config set private_api_key "${{ secrets.PRIVATE_API_KEY }}"
           atlas config set org_id "${{ secrets.ORG_ID }}"
           atlas config set project_id "${{ secrets.PROJECT_ID }}"
+   
+      # Step 4: Use boly38/action-mongo-tools to execute the query
+      - name: Execute MongoDB Query
+        uses: boly38/action-mongo-tools@stable
+        with:
+          connection-string: "${{ secrets.MONGO_URI }}"
+          script: query.js
 
-      # Step 4: Install MongoDB Shell (mongosh)
-      - name: Install MongoDB Shell
-        run: |
-          wget -qO - https://pgp.mongodb.com/server-6.0.asc | sudo tee /usr/share/keyrings/mongodb-server-key.asc
-          echo "deb [signed-by=/usr/share/keyrings/mongodb-server-key.asc] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
-          sudo apt update
-          sudo apt install -y mongodb-mongosh
+      # # Step 4: Install MongoDB Shell (mongosh)
+      # - name: Install MongoDB Shell
+      #   run: |
+      #     wget -qO - https://pgp.mongodb.com/server-6.0.asc | sudo tee /usr/share/keyrings/mongodb-server-key.asc
+      #     echo "deb [signed-by=/usr/share/keyrings/mongodb-server-key.asc] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+      #     sudo apt update
+      #     sudo apt install -y mongodb-mongosh
 
-      # Step 5: Execute Query from File
-      - name: Execute Query from File
-        run: |
-          mongosh "${{ secrets.MONGO_URI }}" query.js
+      # # Step 5: Execute Query from File
+      # - name: Execute Query from File
+      #   run: |
+      #     mongosh "${{ secrets.MONGO_URI }}" query.js
