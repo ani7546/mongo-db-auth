@@ -31,7 +31,9 @@ jobs:
         uses: boly38/action-mongo-tools@stable
         with:
           connection-string: "${{ secrets.MONGO_URI }}"
-          script: query.js
+          command: |
+            use mydatabase;
+            db.mycollection.insertOne({ name: "Animesh", role: "DevOps Engineer" });
 
       # # Step 4: Install MongoDB Shell (mongosh)
       # - name: Install MongoDB Shell
