@@ -10,34 +10,45 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      
+      # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-        # Debug: List files to confirm query.js exists
-      - name: List Files
-        run: ls -la
+      # Step 2: List files initially
+      - name: List Files Initially
+        run: |
+          ls -la
+          cat query.js  # Confirm contents
 
+      # Step 3: Authenticate with Atlas CLI
       - name: Authenticate with Atlas CLI
         uses: andreaangiolillo/atlas-cli-github-action@v1.1.0
         with:
           public-key: ${{ secrets.PUBLIC_API_KEY }}
           private-key: ${{ secrets.PRIVATE_API_KEY }}
-          org-id: ${{ secrets.ORG_ID }}        
-          project-id: ${{ secrets.PROJECT_ID }} 
-  
-      - name: Setup mongo tools - only shell
+          org-id: ${{ secrets.ORG_ID }}
+          project-id: ${{ secrets.PROJECT_ID }}
+
+      # Step 4: List files after Atlas CLI
+      - name: List Files After Atlas CLI
+        run: ls -la
+
+      # Step 5: Set up MongoDB Shell (mongosh)
+      - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
-          mongo-shell: "true"
-          mongo-tools: "false"
+          mongosh_version: '2.1.5'
 
+      # Step 6: List files after mongosh setup
+      - name: List Files After mongosh Setup
+        run: ls -la
+
+      # Step 7: Execute Query with Debugging
       - name: Execute Query from File
         run: |
-          pwd  # Print working directory
-          ls -la  # List files again
-          which mongosh  # Check mongosh location
+          pwd
+          ls -la
+          test -f query.js && echo "query.js exists" || echo "query.js is missing"
+          which mongosh
           mongosh --version
           mongosh "${{ secrets.MONGO_URI }}" query.js
-
-    
