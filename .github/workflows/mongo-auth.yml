@@ -14,41 +14,26 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: List files initially
-      - name: List Files Initially
-        run: |
-          ls -la
-          cat query.js  # Confirm contents
+      # Step 2: Set up MongoDB Atlas CLI with official action
+      - name: Setup Atlas CLI
+        uses: mongodb/atlas-github-action@v0.2.0
+        env:
+          MONGODB_ATLAS_PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
+          MONGODB_ATLAS_PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
+          MONGODB_ATLAS_ORG_ID: ${{ secrets.ORG_ID }}
+          MONGODB_ATLAS_PROJECT_ID: ${{ secrets.PROJECT_ID }}
 
-      # Step 3: Authenticate with Atlas CLI
-      - name: Authenticate with Atlas CLI
-        uses: andreaangiolillo/atlas-cli-github-action@v1.1.0
-        with:
-          public-key: ${{ secrets.PUBLIC_API_KEY }}
-          private-key: ${{ secrets.PRIVATE_API_KEY }}
-          org-id: ${{ secrets.ORG_ID }}
-          project-id: ${{ secrets.PROJECT_ID }}
-
-      # Step 4: List files after Atlas CLI
-      - name: List Files After Atlas CLI
-        run: ls -la
-
-      # Step 5: Set up MongoDB Shell (mongosh)
+      # Step 3: Set up MongoDB Shell (mongosh)
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongosh_version: '2.1.5'
 
-      # Step 6: List files after mongosh setup
-      - name: List Files After mongosh Setup
-        run: ls -la
-
-      # Step 7: Execute Query with Debugging
+      # Step 4: Execute Query from File with Debugging
       - name: Execute Query from File
         run: |
-          pwd
-          ls -la
-          test -f query.js && echo "query.js exists" || echo "query.js is missing"
-          which mongosh
-          mongosh --version
+          pwd  # Should be /home/runner/work/<repo>/<repo>
+          ls -la  # Should list query.js
+          which mongosh  # Confirm mongosh is available
+          mongosh --version  # Verify version
           mongosh "${{ secrets.MONGO_URI }}" query.js
