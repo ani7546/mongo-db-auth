@@ -13,11 +13,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Get GitHub Runner IP
-      id: get_ip
+    - name: Debug IP Fetching
       run: |
-        echo "RUNNER_IP=$(curl -s ifconfig.me)" >> $GITHUB_ENV
-        echo "Runner IP: $RUNNER_IP"
+          echo "Fetching IP using ifconfig.me..."
+          curl -s ifconfig.me || echo "ifconfig.me failed"
+          echo "Fetching IP using checkip.amazonaws.com..."
+          curl -s https://checkip.amazonaws.com || echo "checkip.amazonaws.com failed"
+
 
     - name: Add GitHub Runner IP to MongoDB Atlas
       uses: mongodb/atlas-github-action@v0.2.0
