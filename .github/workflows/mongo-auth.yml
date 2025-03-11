@@ -14,9 +14,9 @@ jobs:
         uses: actions/checkout@v4
       
       # Step 2: Get current IP address
-      - name: Get current IP
-        id: ip
-        uses: haythem/public-ip@v1.3
+      - name: Get Runner IP
+        id: get-ip
+        run: echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_ENV
       
       # Step 3: Authenticate with MongoDB Atlas
       - name: Authenticate with MongoDB Atlas
@@ -56,3 +56,4 @@ jobs:
             --url "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList/${{ steps.ip.outputs.ipv4 }}" \
             --header "Accept: application/json" \
             --header "Authorization: ApiKey ${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}"
+            --data '{"ipAddress":"${{ env.RUNNER_IP }}/32","comment":"GitHub Actions temporary access"}'
