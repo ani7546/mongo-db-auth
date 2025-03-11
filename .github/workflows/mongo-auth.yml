@@ -23,43 +23,18 @@ jobs:
       # Step 2: Get the current runner IP
       - name: Get Runner IP
         id: get-ip
-        run: |
-          RUNNER_IP=$(curl -s https://api.ipify.org)
-          if [ -z "$RUNNER_IP" ]; then
-            echo "Error: Failed to retrieve runner IP"
-            exit 1
-          fi
-          echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
+        run: echo "RUNNER_IP=$(curl -s https://api.ipify.org)" >> $GITHUB_ENV
 
       # Step 3: Add Runner IP to Atlas Network Access
       - name: Add IP to MongoDB Atlas Network Access
         run: |
-          # Debug: Print the IP to verify
-          echo "Adding IP: ${RUNNER_IP}/32"
-          
-          # Use heredoc with - to strip leading tabs, and wrap in an array
-          RESPONSE=$(curl -s --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
+          curl -s --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
             --digest \
             --header "Content-Type: application/json" \
             --request POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/${PROJECT_ID}/accessList" \
             --data @- <<- EOF
-          [
-            {
-              "ipAddress": "${RUNNER_IP}/32",
-              "comment": "GitHub Actions Runner - Temporary"
-            }
-          ]
+          [{"ipAddress": "${RUNNER_IP}/32", "comment": "GitHub Actions Runner - Temporary"}]
           EOF
-          )
-          echo "API Response: $RESPONSE"
-          
-          # Check if the request succeeded
-          if echo "$RESPONSE" | grep -q "error"; then
-            echo "Failed to add IP to Atlas Network Access: $RESPONSE"
-            exit 1
-          fi
-          
-          # Wait for network changes to propagate
           sleep 30
 
       # Step 4: Setup MongoDB Tools
@@ -69,29 +44,14 @@ jobs:
           mongo-shell: "true"
           mongo-tools: "false"
 
-      # Step 5: Execute query from file
+      # Step 5: Execute Query from File
       - name: Execute Query from File
-        run: |
-          if [ ! -f "query.js" ]; then
-            echo "Error: query.js file not found"
-            exit 1
-          fi
-          mongosh "$MONGODB_URI" --verbose query.js || {
-            echo "Error: Query execution failed"
-            exit 1
-          }
+        run: mongosh "$MONGODB_URI" query.js
 
       # Step 6: Clean up - Remove IP from Atlas Network Access
       - name: Remove IP from MongoDB Atlas Network Access
-        if: always()  # Run even if previous steps fail
+        if: always()
         run: |
-          echo "Removing IP: ${RUNNER_IP}/32"
-          RESPONSE=$(curl -s --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
+          curl -s --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
             --digest \
-            --request DELETE "https://cloud.mongodb.com/api/atlas/v1.0/groups/${PROJECT_ID}/accessList/${RUNNER_IP}%2F32")
-          echo "Delete API Response: $RESPONSE"
-          if echo "$RESPONSE" | grep -q "error"; then
-            echo "Warning: Failed to remove IP from Atlas Network Access: $RESPONSE"
-          else
-            echo "Successfully removed IP from Atlas Network Access"
-          fi
+            --request DELETE "https://cloud.mongodb.com/api/atlas/v1.0/groups/${PROJECT_ID}/accessList/${RUNNER_IP}%2F32"
