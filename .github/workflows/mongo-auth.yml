@@ -8,43 +8,39 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Debug IP Fetching
-      run: |
-          echo "Fetching IP using ifconfig.me..."
-          curl -s ifconfig.me || echo "ifconfig.me failed"
-          echo "Fetching IP using checkip.amazonaws.com..."
-          curl -s https://checkip.amazonaws.com || echo "checkip.amazonaws.com failed"
+      - name: Get GitHub Runner IP
+        id: ip
+        run: |
+          echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_ENV
+          echo "Runner IP: ${{ env.RUNNER_IP }}"
 
+      - name: Add GitHub Runner IP to MongoDB Atlas
+        uses: mongodb/atlas-github-action@v0.2.0
+        with:
+          publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
+          privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
+          projectId: ${{ secrets.PROJECT_ID }}
+          allowIps: ${{ env.RUNNER_IP }}
 
-    - name: Add GitHub Runner IP to MongoDB Atlas
-      uses: mongodb/atlas-github-action@v0.2.0
-      with:
-        publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
-        privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
-        projectId: ${{ secrets.PROJECT_ID }}
-        allowIps: ${{ env.RUNNER_IP }}
-
-    - name: Setup MongoDB Tools
-      uses: boly38/action-mongo-tools@stable
-      with:
+      - name: Setup MongoDB Tools
+        uses: boly38/action-mongo-tools@stable
+        with:
           mongo-shell: "true"
           mongo-tools: "false"
-      
-      # Step 6: Execute query from file
-    - name: Execute Query from File
-      run: |
+
+      - name: Execute Query from File
+        run: |
           mongosh "${{ secrets.MONGO_URI }}" query.js
 
-    - name: Remove GitHub Runner IP from MongoDB Atlas
-      if: always()
-      uses: mongodb/atlas-github-action@v0.2.0
-      with:
-        publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
-        privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
-        projectId: ${{ secrets.PROJECT_ID }}
-        deleteIps: ${{ env.RUNNER_IP }}
+      - name: Remove GitHub Runner IP from MongoDB Atlas
+        if: always()
+        uses: mongodb/atlas-github-action@v0.2.0
+        with:
+          publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
+          privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
+          projectId: ${{ secrets.PROJECT_ID }}
+          deleteIps: ${{ env.RUNNER_IP }}
