@@ -14,23 +14,38 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up mongodb cli
-      # Step 2: Authenticate with MongoDB Atlas using GitHub Actions module
-      - name: Authenticate with MongoDB Atlas
+      # Step 2: Get Runner's Public IP
+      - name: Get Runner IP
+        id: get-ip
+        run: echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_ENV
+
+      # Step 3: Add GitHub Runner IP to MongoDB Atlas
+      - name: Add IP to MongoDB Atlas
         uses: mongodb/atlas-github-action@v0.2.0
         with:
           publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
           privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
           projectId: ${{ secrets.PROJECT_ID }}
+          allowListEntry: ${{ env.RUNNER_IP }}
 
-      # Step 3: Set up mongodb shell
+      # Step 4: Setup MongoDB Shell
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
 
-      # Step 4: exceute query from file
+      # Step 5: Execute Query from File
       - name: Execute Query from File
         run: |
           mongosh "${{ secrets.MONGO_URI }}" query.js
+
+      # Step 6: Remove IP from MongoDB Atlas
+      - name: Remove IP from MongoDB Atlas
+        if: always()
+        uses: mongodb/atlas-github-action@v0.2.0
+        with:
+          publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
+          privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
+          projectId: ${{ secrets.PROJECT_ID }}
+          deleteAllowListEntry: ${{ env.RUNNER_IP }}
