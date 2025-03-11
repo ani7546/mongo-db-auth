@@ -38,7 +38,7 @@ jobs:
       # Step 5: Execute Query from File
       - name: Execute Query from File
         run: |
-          mongosh "${{ secrets.MONGO_URI }}" query.js
+          mongosh --tls --tlsAllowInvalidCertificates "${{ secrets.MONGO_URI }}" query.js
 
       # Step 6: Remove IP from MongoDB Atlas
       - name: Remove IP from MongoDB Atlas
