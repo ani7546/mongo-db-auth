@@ -16,8 +16,14 @@ jobs:
       - name: Get Runner IP
         id: get-ip
         run: |
-           echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com | tr -d '\n')" >> $GITHUB_ENV
-           echo "Runner IP: $RUNNER_IP"
+         IP=$(curl -s https://checkip.amazonaws.com)
+         echo "Fetched IP: $IP"
+         if [[ -z "$IP" ]]; then
+          echo "Error: Unable to fetch public IP address"
+          exit 1
+         fi
+         echo "RUNNER_IP=$IP" >> $GITHUB_ENV
+         echo "Runner IP: $RUNNER_IP"
         shell: bash
 
       - name: Add Runner IP to MongoDB Atlas Access List
