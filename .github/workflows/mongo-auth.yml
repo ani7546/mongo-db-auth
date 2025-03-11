@@ -18,7 +18,7 @@ jobs:
         run: |
            echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com | tr -d '\n')" >> $GITHUB_ENV
            echo "Runner IP: $RUNNER_IP"
-           shell: bash
+        shell: bash
 
       - name: Add Runner IP to MongoDB Atlas Access List
         run: |
