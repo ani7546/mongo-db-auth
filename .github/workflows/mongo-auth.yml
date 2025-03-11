@@ -8,47 +8,64 @@ on:
 jobs:
   execute-query:
     runs-on: ubuntu-latest
+    
+    env:
+      MONGODB_URI: ${{ secrets.MONGO_URI }}
+      PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
+      PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
+      PROJECT_ID: ${{ secrets.PROJECT_ID }}
 
     steps:
+      # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # Step 2: Get the current runner IP
       - name: Get Runner IP
         id: get-ip
         run: |
-         IP=$(curl -s https://checkip.amazonaws.com)
-         echo "Fetched IP: $IP"
-         if [[ -z "$IP" ]]; then
-          echo "Error: Unable to fetch public IP address"
-          exit 1
-         fi
-         echo "RUNNER_IP=$IP" >> $GITHUB_ENV
-         echo "Runner IP: $RUNNER_IP"
-        shell: bash
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
 
-      - name: Add Runner IP to MongoDB Atlas Access List
+      # Step 3: Add Runner IP to Atlas Network Access
+      - name: Add IP to MongoDB Atlas Network Access
         run: |
-          AUTH_HEADER="Authorization: Basic $(echo -n '${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}' | base64)"
-          curl -X POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList" \
+          curl --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
+            --digest \
             --header "Content-Type: application/json" \
-            --header "Accept: application/json" \
-            --header "$AUTH_HEADER" \
-            --data '{"ipAddress":"'"$RUNNER_IP"'","comment":"GitHub Actions Runner"}'
+            --request POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/${PROJECT_ID}/accessList" \
+            --data "{\"ipAddress\": \"${RUNNER_IP}/32\", \"comment\": \"GitHub Actions Runner - Temporary\"}" || {
+              echo "Failed to add IP to Atlas Network Access"
+              exit 1
+            }
+          # Wait for network changes to propagate (MongoDB Atlas might need a moment)
+          sleep 30
 
+      # Step 4: Setup MongoDB Tools
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
 
+      # Step 5: Execute query from file
       - name: Execute Query from File
         run: |
-          mongosh "${{ secrets.MONGO_URI }}" query.js
+          if [ ! -f "query.js" ]; then
+            echo "Error: query.js file not found"
+            exit 1
+          fi
+          mongosh "$MONGODB_URI" --verbose query.js || {
+            echo "Error: Query execution failed"
+            exit 1
+          }
 
-      - name: Remove Runner IP from MongoDB Atlas Access List
-        if: always()
+      # Step 6: Clean up - Remove IP from Atlas Network Access
+      - name: Remove IP from MongoDB Atlas Network Access
+        if: always()  # Run even if previous steps fail
         run: |
-          AUTH_HEADER="Authorization: Basic $(echo -n '${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}' | base64)"
-          curl -X DELETE "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList/${RUNNER_IP}" \
-            --header "Accept: application/json" \
-            --header "$AUTH_HEADER"
+          curl --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
+            --digest \
+            --request DELETE "https://cloud.mongodb.com/api/atlas/v1.0/groups/${PROJECT_ID}/accessList/${RUNNER_IP}%2F32" || {
+              echo "Warning: Failed to remove IP from Atlas Network Access"
+            }
