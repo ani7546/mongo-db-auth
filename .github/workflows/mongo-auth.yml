@@ -20,8 +20,9 @@ jobs:
         run: |
           RUNNER_IP=$(curl -s https://api.ipify.org)
           echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
+          echo "Runner IP is $RUNNER_IP"
 
-      # Step 3: Authenticate with MongoDB Atlas and add runner IP to access list
+      # Step 3: Authenticate and add runner IP to access list
       - name: Add Runner IP to MongoDB Atlas Access List
         uses: mongodb/atlas-github-action@v0.2.0
         with:
@@ -31,22 +32,32 @@ jobs:
           action: "addIpToAccessList"
           ipAddress: ${{ env.RUNNER_IP }}
           comment: "Temporary GitHub Actions Runner IP"
+        continue-on-error: false  # Fail if this step fails
 
-      # Step 4: Set up MongoDB shell
+      # Step 4: Wait for IP access list to propagate
+      - name: Wait for Network Update
+        run: |
+          echo "Waiting 15 seconds for IP access list to update..."
+          sleep 15
+
+      # Step 5: Set up MongoDB shell
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
 
-      # Step 5: Execute query from file
+      # Step 6: Test connectivity and execute query
       - name: Execute Query from File
         run: |
+          echo "Attempting to connect to MongoDB Atlas..."
+          mongosh "${{ secrets.MONGO_URI }}" --eval "print('Connected successfully')" || exit 1
+          echo "Running query.js..."
           mongosh "${{ secrets.MONGO_URI }}" query.js
 
-      # Step 6: Remove Runner IP from Access List (cleanup)
+      # Step 7: Remove Runner IP from Access List (cleanup)
       - name: Remove Runner IP from MongoDB Atlas Access List
-        if: always()  # Runs even if previous steps fail
+        if: always()
         uses: mongodb/atlas-github-action@v0.2.0
         with:
           publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
