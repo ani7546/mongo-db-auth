@@ -14,38 +14,43 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Step 2: Get Runner's Public IP
+      # Step 2: Get the runner's public IP
       - name: Get Runner IP
-        id: get-ip
-        run: echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_ENV
+        id: ip
+        run: |
+          RUNNER_IP=$(curl -s https://api.ipify.org)
+          echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
 
-      # Step 3: Add GitHub Runner IP to MongoDB Atlas
-      - name: Add IP to MongoDB Atlas
+      # Step 3: Authenticate with MongoDB Atlas and add runner IP to access list
+      - name: Add Runner IP to MongoDB Atlas Access List
         uses: mongodb/atlas-github-action@v0.2.0
         with:
           publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
           privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
           projectId: ${{ secrets.PROJECT_ID }}
-          allowListEntry: ${{ env.RUNNER_IP }}
+          action: "addIpToAccessList"
+          ipAddress: ${{ env.RUNNER_IP }}
+          comment: "Temporary GitHub Actions Runner IP"
 
-      # Step 4: Setup MongoDB Shell
+      # Step 4: Set up MongoDB shell
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
 
-      # Step 5: Execute Query from File
+      # Step 5: Execute query from file
       - name: Execute Query from File
         run: |
-          mongosh --tls --tlsAllowInvalidCertificates "${{ secrets.MONGO_URI }}" query.js
+          mongosh "${{ secrets.MONGO_URI }}" query.js
 
-      # Step 6: Remove IP from MongoDB Atlas
-      - name: Remove IP from MongoDB Atlas
-        if: always()
+      # Step 6: Remove Runner IP from Access List (cleanup)
+      - name: Remove Runner IP from MongoDB Atlas Access List
+        if: always()  # Runs even if previous steps fail
         uses: mongodb/atlas-github-action@v0.2.0
         with:
           publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
           privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
           projectId: ${{ secrets.PROJECT_ID }}
-          deleteAllowListEntry: ${{ env.RUNNER_IP }}
+          action: "removeIpFromAccessList"
+          ipAddress: ${{ env.RUNNER_IP }}
