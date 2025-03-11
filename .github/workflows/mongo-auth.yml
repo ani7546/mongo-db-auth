@@ -1,4 +1,4 @@
-name: MongoDB Atlas Query Workflow
+name: Deploy MongoDB Query to Atlas
 
 on:
   push:
@@ -6,56 +6,39 @@ on:
       - main
 
 jobs:
-  execute-query:
+  deploy:
     runs-on: ubuntu-latest
+
     steps:
-      # Step 1: Checkout the repository
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-      
-      # Step 2: Get current IP address
-      - name: Get Runner IP
-        id: get-ip
-        run: echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_ENV
-      
-      # Step 3: Authenticate with MongoDB Atlas
-      - name: Authenticate with MongoDB Atlas
-        uses: mongodb/atlas-github-action@v0.2.0
-        with:
-          publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
-          privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
-          projectId: ${{ secrets.PROJECT_ID }}
-      
-      # Step 4: Add current IP to Atlas access list
-      - name: Add IP to Atlas access list
-        run: |
-          curl --request POST \
-            --url "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList" \
-            --header "Content-Type: application/json" \
-            --header "Accept: application/json" \
-            --user "${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}" \
-            --data '{"ipAddress":"${{ steps.ip.outputs.ipv4 }}/32","comment":"GitHub Actions temporary access"}'
-      
-      # Step 5: Setup MongoDB Tools
-      - name: Setup MongoDB Tools
-        uses: boly38/action-mongo-tools@stable
-        with:
-          mongo-shell: "true"
-          mongo-tools: "false"
-      
-      # Step 6: Execute query from file
-      - name: Execute Query from File
-        run: |
-          mongosh "${{ secrets.MONGO_URI }}" query.js
-      
-      # Step 7: Remove IP from Atlas access list
-      - name: Remove IP from Atlas access list
-        if: always()
-        run: |
-          - name: Remove IP from Atlas access list
-        if: always()
-        run: |
-          curl --request DELETE \
-            --url "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList/${{ env.RUNNER_IP }}" \
-            --header "Accept: application/json" \
-            --user "${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}"
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Get GitHub Runner IP
+      id: get_ip
+      run: |
+        echo "RUNNER_IP=$(curl -s ifconfig.me)" >> $GITHUB_ENV
+        echo "Runner IP: $RUNNER_IP"
+
+    - name: Add GitHub Runner IP to MongoDB Atlas
+      uses: mongodb/atlas-github-action@v0.2.0
+      with:
+        publicApiKey: ${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}
+        privateApiKey: ${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}
+        projectId: ${{ secrets.MONGO_ATLAS_PROJECT_ID }}
+        allowIps: ${{ env.RUNNER_IP }}
+
+    - name: Execute MongoDB Query
+      uses: boly38/action-mongo-tools@stable
+      with:
+        uri: ${{ secrets.MONGO_URI }}
+        database: test_collection  # Change to your database name
+        script: ./query.js    # Ensure your query is written in this file
+
+    - name: Remove GitHub Runner IP from MongoDB Atlas
+      if: always()
+      uses: mongodb/atlas-github-action@v0.2.0
+      with:
+        publicApiKey: ${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}
+        privateApiKey: ${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}
+        projectId: ${{ secrets.MONGO_ATLAS_PROJECT_ID }}
+        deleteIps: ${{ env.RUNNER_IP }}
