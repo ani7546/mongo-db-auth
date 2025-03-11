@@ -22,7 +22,7 @@ jobs:
           echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
           echo "Detected Runner IP: $RUNNER_IP"
 
-      # Step 3: Add runner IP to MongoDB Atlas Access List with debugging
+      # Step 3: Add runner IP to MongoDB Atlas Access List
       - name: Add Runner IP to MongoDB Atlas Access List
         id: add-ip
         uses: mongodb/atlas-github-action@v0.2.0
@@ -35,12 +35,19 @@ jobs:
           comment: "Temporary GitHub Actions Runner IP"
         continue-on-error: false  # Fail if this step fails
 
-      # Step 4: Verify IP addition (optional manual check substitute)
-      - name: Debug IP Access List
+      # Step 4: Verify IP was added
+      - name: Verify IP in Access List
         run: |
-          echo "IP ${{ env.RUNNER_IP }} should now be in the access list."
-          curl -u "${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}" \
-            --digest "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList" | jq .
+          echo "Checking if ${{ env.RUNNER_IP }} was added to the access list..."
+          ACCESS_LIST=$(curl -s -u "${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}" \
+            --digest "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList" | jq -r '.results[] | .ipAddress')
+          echo "Current access list IPs: $ACCESS_LIST"
+          if echo "$ACCESS_LIST" | grep -q "${{ env.RUNNER_IP }}"; then
+            echo "IP ${{ env.RUNNER_IP }} successfully added!"
+          else
+            echo "Error: IP ${{ env.RUNNER_IP }} not found in access list!"
+            exit 1
+          fi
 
       # Step 5: Wait for IP access list to propagate
       - name: Wait for Network Update
