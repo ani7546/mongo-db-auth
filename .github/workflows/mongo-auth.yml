@@ -22,7 +22,7 @@ jobs:
           echo "RUNNER_IP=$RUNNER_IP" >> $GITHUB_ENV
           echo "Detected Runner IP: $RUNNER_IP"
 
-      # Step 3: Add runner IP to MongoDB Atlas Access List
+      # Step 3: Add runner IP to MongoDB Atlas Access List with debugging
       - name: Add Runner IP to MongoDB Atlas Access List
         id: add-ip
         uses: mongodb/atlas-github-action@v0.2.0
@@ -35,7 +35,18 @@ jobs:
           comment: "Temporary GitHub Actions Runner IP"
         continue-on-error: false  # Fail if this step fails
 
-      # Step 4: Verify IP was added
+      # Step 4: Debug the API response manually
+      - name: Debug Add IP Response
+        run: |
+          echo "Manually adding IP to verify API behavior..."
+          RESPONSE=$(curl -s -X POST -u "${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}" \
+            --digest -H "Content-Type: application/json" \
+            -d '[{"ipAddress": "${{ env.RUNNER_IP }}", "comment": "Manual GitHub Actions Test"}]' \
+            "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList")
+          echo "API Response: $RESPONSE"
+          echo "$RESPONSE" | jq . || echo "Failed to parse response"
+
+      # Step 5: Verify IP was added
       - name: Verify IP in Access List
         run: |
           echo "Checking if ${{ env.RUNNER_IP }} was added to the access list..."
@@ -49,20 +60,20 @@ jobs:
             exit 1
           fi
 
-      # Step 5: Wait for IP access list to propagate
+      # Step 6: Wait for IP access list to propagate
       - name: Wait for Network Update
         run: |
           echo "Waiting 30 seconds for IP access list to update..."
           sleep 30
 
-      # Step 6: Set up MongoDB shell
+      # Step 7: Set up MongoDB shell
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
 
-      # Step 7: Test connectivity and execute query
+      # Step 8: Test connectivity and execute query
       - name: Execute Query from File
         run: |
           echo "Attempting to connect to MongoDB Atlas..."
@@ -70,7 +81,7 @@ jobs:
           echo "Running query.js..."
           mongosh "${{ secrets.MONGO_URI }}" query.js
 
-      # Step 8: Remove Runner IP from Access List (cleanup)
+      # Step 9: Remove Runner IP from Access List (cleanup)
       - name: Remove Runner IP from MongoDB Atlas Access List
         if: always()
         uses: mongodb/atlas-github-action@v0.2.0
