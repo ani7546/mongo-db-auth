@@ -13,11 +13,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Get Runner Public IP
+      - name: Get Runner IP
         id: get-ip
         run: |
-          echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com | tr -d '\n')" >> $GITHUB_ENV
-          echo "Runner IP: $RUNNER_IP"
+           echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com | tr -d '\n')" >> $GITHUB_ENV
+           echo "Runner IP: $RUNNER_IP"
+           shell: bash
 
       - name: Add Runner IP to MongoDB Atlas Access List
         run: |
