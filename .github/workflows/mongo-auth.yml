@@ -12,19 +12,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get GitHub Runner IP
-        id: ip
+      - name: Get the public IP of this runner
+        id: get_gh_runner_ip
+        shell: bash
         run: |
-          echo "RUNNER_IP=$(curl -s https://checkip.amazonaws.com)" >> $GITHUB_ENV
-          echo "Runner IP: ${{ env.RUNNER_IP }}"
+          echo "ip_address=$(curl -s https://checkip.amazonaws.com | tr -d '\n')" >> "$GITHUB_OUTPUT"
 
-      - name: Add GitHub Runner IP to MongoDB Atlas
-        uses: mongodb/atlas-github-action@v0.2.0
-        with:
-          publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
-          privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
-          projectId: ${{ secrets.PROJECT_ID }}
-          allowIps: ${{ env.RUNNER_IP }}
+
+      - name: Add runner IP to MongoDB Atlas access list
+        run: |
+          atlas accessLists create ${{ steps.get_gh_runner_ip.outputs.ip_address }} \
+            --type ipAddress \
+            --projectId "${{ secrets.PROJECT_ID }}" \
+            --comment "Temporary access for GitHub Actions Runner"
 
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
