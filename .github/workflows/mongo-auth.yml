@@ -52,8 +52,10 @@ jobs:
       - name: Remove IP from Atlas access list
         if: always()
         run: |
+          - name: Remove IP from Atlas access list
+        if: always()
+        run: |
           curl --request DELETE \
-            --url "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList/${{ steps.ip.outputs.ipv4 }}" \
+            --url "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ secrets.PROJECT_ID }}/accessList/${{ env.RUNNER_IP }}" \
             --header "Accept: application/json" \
-            --header "Authorization: ApiKey ${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}"
-            --data '{"ipAddress":"${{ env.RUNNER_IP }}/32","comment":"GitHub Actions temporary access"}'
+            --user "${{ secrets.PUBLIC_API_KEY }}:${{ secrets.PRIVATE_API_KEY }}"
