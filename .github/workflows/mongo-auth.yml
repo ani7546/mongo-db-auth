@@ -27,12 +27,16 @@ jobs:
         projectId: ${{ secrets.PROJECT_ID }}
         allowIps: ${{ env.RUNNER_IP }}
 
-    - name: Execute MongoDB Query
+    - name: Setup MongoDB Tools
       uses: boly38/action-mongo-tools@stable
       with:
-        uri: ${{ secrets.MONGO_URI }}
-        database: test_collection  # Change to your database name
-        script: ./query.js    # Ensure your query is written in this file
+          mongo-shell: "true"
+          mongo-tools: "false"
+      
+      # Step 6: Execute query from file
+    - name: Execute Query from File
+      run: |
+          mongosh "${{ secrets.MONGO_URI }}" query.js
 
     - name: Remove GitHub Runner IP from MongoDB Atlas
       if: always()
