@@ -22,9 +22,9 @@ jobs:
     - name: Add GitHub Runner IP to MongoDB Atlas
       uses: mongodb/atlas-github-action@v0.2.0
       with:
-        publicApiKey: ${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}
-        privateApiKey: ${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}
-        projectId: ${{ secrets.MONGO_ATLAS_PROJECT_ID }}
+        publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
+        privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
+        projectId: ${{ secrets.PROJECT_ID }}
         allowIps: ${{ env.RUNNER_IP }}
 
     - name: Execute MongoDB Query
@@ -38,7 +38,7 @@ jobs:
       if: always()
       uses: mongodb/atlas-github-action@v0.2.0
       with:
-        publicApiKey: ${{ secrets.MONGO_ATLAS_PUBLIC_KEY }}
-        privateApiKey: ${{ secrets.MONGO_ATLAS_PRIVATE_KEY }}
-        projectId: ${{ secrets.MONGO_ATLAS_PROJECT_ID }}
+        publicApiKey: ${{ secrets.PUBLIC_API_KEY }}
+        privateApiKey: ${{ secrets.PRIVATE_API_KEY }}
+        projectId: ${{ secrets.PROJECT_ID }}
         deleteIps: ${{ env.RUNNER_IP }}
