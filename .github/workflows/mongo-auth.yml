@@ -25,7 +25,7 @@ jobs:
         id: get-ip
         run: echo "RUNNER_IP=$(curl -s https://api.ipify.org)" >> $GITHUB_ENV
 
-      # Step 3: Add Runner IP to Atlas Network Access using HTTP Request Action
+      # Step 3a: Add Runner IP to Atlas Network Access
       - name: Add IP to MongoDB Atlas Network Access
         uses: fjogeleit/http-request-action@v1
         with:
@@ -35,9 +35,11 @@ jobs:
           password: ${{ env.PRIVATE_API_KEY }}
           customHeaders: '{"Content-Type": "application/json", "Accept": "application/json"}'
           data: '[{"ipAddress": "${{ env.RUNNER_IP }}/32", "comment": "GitHub Actions Runner - Temporary"}]'
-          timeout: 10000  # 10 seconds timeout
-        followed by: |
-          sleep 30  # Wait for network changes to propagate
+          timeout: 10000
+
+      # Step 3b: Wait for network propagation
+      - name: Wait for Network Propagation
+        run: sleep 30
 
       # Step 4: Setup MongoDB Tools
       - name: Setup MongoDB Tools
