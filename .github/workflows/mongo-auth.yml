@@ -9,51 +9,49 @@ jobs:
     
     env:
       MONGODB_URI: ${{ secrets.MONGO_URI }}
-      PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
-      PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
-      PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      MONGODB_ATLAS_PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      MONGODB_ATLAS_PUBLIC_KEY: ${{ secrets.PUBLIC_API_KEY }}
+      MONGODB_ATLAS_PRIVATE_KEY: ${{ secrets.PRIVATE_API_KEY }}
     steps:
       # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
       
       # Step 2: Get the current runner IP
-      - name: Get Runner IP
-        id: get-ip
-        run: echo "RUNNER_IP=$(curl -s https://api.ipify.org)" >> $GITHUB_ENV
+      - name: Get the public IP of this runner
+        id: get_gh_runner_ip
+        shell: bash
+        run: |
+          echo "ip_address=$(curl -s https://checkip.amazonaws.com | tr -d '\n')" >> "$GITHUB_OUTPUT"
       
-      # Step 3: Add Runner IP to Atlas Network Access using Digest Auth Action
-      - name: Add IP to MongoDB Atlas Network Access
-        uses: im-open/digest-auth-http-client@v1
-        with:
-          url: https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ env.PROJECT_ID }}/accessList
-          method: POST
-          username: ${{ env.PUBLIC_API_KEY }}
-          password: ${{ env.PRIVATE_API_KEY }}
-          headers: '{"Content-Type": "application/json"}'
-          data: '[{"ipAddress": "${{ env.RUNNER_IP }}/32", "comment": "GitHub Actions Runner - Temporary"}]'
+      # Step 3: Setup MongoDB Atlas CLI
+      - name: Setup MongoDB Atlas CLI
+        uses: mongodb/atlas-github-action@v0.2.0
       
-      # Add a pause to allow network access changes to propagate
-      - name: Wait for Access List update
+      # Step 4: Add runner IP to MongoDB access list
+      - name: Add runner IP to MongoDB access list
+        shell: bash
+        run: |
+          atlas accessLists create ${{ steps.get_gh_runner_ip.outputs.ip_address }} --type ipAddress --projectId ${{ env.MONGODB_ATLAS_PROJECT_ID }} --comment "GitHub Actions Runner - Temporary"
+          
+      # Wait for access list changes to propagate
+      - name: Wait for access list changes to propagate
         run: sleep 30
       
-      # Step 4: Setup MongoDB Tools
+      # Step 5: Setup MongoDB Tools
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
       
-      # Step 5: Execute Query from File
+      # Step 6: Execute Query from File
       - name: Execute Query from File
         run: mongosh "$MONGODB_URI" query.js
       
-      # Step 6: Clean up - Remove IP from Atlas Network Access
-      - name: Remove IP from MongoDB Atlas Network Access
+      # Step 7: Remove runner IP from MongoDB access list
+      - name: Remove runner IP from MongoDB access list
         if: always()
-        uses: im-open/digest-auth-http-client@v1
-        with:
-          url: https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ env.PROJECT_ID }}/accessList/${{ env.RUNNER_IP }}%2F32
-          method: DELETE
-          username: ${{ env.PUBLIC_API_KEY }}
-          password: ${{ env.PRIVATE_API_KEY }}
+        shell: bash
+        run: |
+          atlas accessLists delete ${{ steps.get_gh_runner_ip.outputs.ip_address }} --type ipAddress --projectId ${{ env.MONGODB_ATLAS_PROJECT_ID }}
