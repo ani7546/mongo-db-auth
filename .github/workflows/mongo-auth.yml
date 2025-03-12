@@ -28,7 +28,12 @@ jobs:
       - name: Setup MongoDB Atlas CLI
         uses: mongodb/atlas-github-action@v0.2.0
       
-      # Step 4: Add runner IP to MongoDB access list
+      # Step 4: Configure Atlas CLI authentication
+      - name: Configure Atlas CLI
+        run: |
+          atlas config init --public-api-key ${{ env.MONGODB_ATLAS_PUBLIC_KEY }} --private-api-key ${{ env.MONGODB_ATLAS_PRIVATE_KEY }} --output json
+      
+      # Step 5: Add runner IP to MongoDB access list
       - name: Add runner IP to MongoDB access list
         shell: bash
         run: |
@@ -38,18 +43,18 @@ jobs:
       - name: Wait for access list changes to propagate
         run: sleep 30
       
-      # Step 5: Setup MongoDB Tools
+      # Step 6: Setup MongoDB Tools
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
       
-      # Step 6: Execute Query from File
+      # Step 7: Execute Query from File
       - name: Execute Query from File
         run: mongosh "$MONGODB_URI" query.js
       
-      # Step 7: Remove runner IP from MongoDB access list
+      # Step 8: Remove runner IP from MongoDB access list
       - name: Remove runner IP from MongoDB access list
         if: always()
         shell: bash
