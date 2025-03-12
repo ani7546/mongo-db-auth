@@ -35,10 +35,12 @@ jobs:
           privateApiKey: ${{ env.PRIVATE_API_KEY }}
           projectId: ${{ env.PROJECT_ID }}
 
-      # Step 3b: Add Runner IP to MongoDB Access List
+      # Step 3b: Add Runner IP to MongoDB Atlas Network Access
       - name: Add Runner IP to MongoDB Atlas Network Access
         shell: bash
         run: |
+          # Explicitly set API keys for the CLI
+          atlas config set --publicApiKey ${{ env.PUBLIC_API_KEY }} --privateApiKey ${{ env.PRIVATE_API_KEY }}
           atlas accessLists create ${{ steps.get_gh_runner_ip.outputs.ip_address }} --type ipAddress --projectId ${{ env.PROJECT_ID }} --comment "Temporary access for GH Action"
           sleep 30  # Wait for network changes to propagate
 
@@ -58,4 +60,5 @@ jobs:
         if: always()
         shell: bash
         run: |
+          atlas config set --publicApiKey ${{ env.PUBLIC_API_KEY }} --privateApiKey ${{ env.PRIVATE_API_KEY }}
           atlas accessLists delete ${{ steps.get_gh_runner_ip.outputs.ip_address }} --projectId ${{ env.PROJECT_ID }} --force
