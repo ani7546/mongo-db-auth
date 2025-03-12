@@ -1,10 +1,8 @@
 name: MongoDB Atlas Query Workflow
-
 on:
   push:
     branches:
       - main
-
 jobs:
   execute-query:
     runs-on: ubuntu-latest
@@ -14,52 +12,48 @@ jobs:
       PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
       PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
-
     steps:
       # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
-
+      
       # Step 2: Get the current runner IP
       - name: Get Runner IP
         id: get-ip
         run: echo "RUNNER_IP=$(curl -s https://api.ipify.org)" >> $GITHUB_ENV
-
-      # Step 3a: Add Runner IP to Atlas Network Access
+      
+      # Step 3: Add Runner IP to Atlas Network Access using Digest Auth Action
       - name: Add IP to MongoDB Atlas Network Access
-        uses: fjogeleit/http-request-action@v1
+        uses: im-open/digest-auth-http-client@v1
         with:
-          url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ env.PROJECT_ID }}/accessList"
-          method: "POST"
+          url: https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ env.PROJECT_ID }}/accessList
+          method: POST
           username: ${{ env.PUBLIC_API_KEY }}
           password: ${{ env.PRIVATE_API_KEY }}
-          customHeaders: '{"Content-Type": "application/json", "Accept": "application/json"}'
+          headers: '{"Content-Type": "application/json"}'
           data: '[{"ipAddress": "${{ env.RUNNER_IP }}/32", "comment": "GitHub Actions Runner - Temporary"}]'
-          timeout: 10000
-
-      # Step 3b: Wait for network propagation
-      - name: Wait for Network Propagation
+      
+      # Add a pause to allow network access changes to propagate
+      - name: Wait for Access List update
         run: sleep 30
-
+      
       # Step 4: Setup MongoDB Tools
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
-
+      
       # Step 5: Execute Query from File
       - name: Execute Query from File
         run: mongosh "$MONGODB_URI" query.js
-
+      
       # Step 6: Clean up - Remove IP from Atlas Network Access
       - name: Remove IP from MongoDB Atlas Network Access
         if: always()
-        uses: fjogeleit/http-request-action@v1
+        uses: im-open/digest-auth-http-client@v1
         with:
-          url: "https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ env.PROJECT_ID }}/accessList/${{ env.RUNNER_IP }}%2F32"
-          method: "DELETE"
+          url: https://cloud.mongodb.com/api/atlas/v1.0/groups/${{ env.PROJECT_ID }}/accessList/${{ env.RUNNER_IP }}%2F32
+          method: DELETE
           username: ${{ env.PUBLIC_API_KEY }}
           password: ${{ env.PRIVATE_API_KEY }}
-          customHeaders: '{"Accept": "application/json"}'
-          timeout: 10000
