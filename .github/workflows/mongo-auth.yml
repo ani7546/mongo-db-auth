@@ -1,10 +1,8 @@
 name: MongoDB Atlas Query Workflow
-
 on:
   push:
     branches:
       - main
-
 jobs:
   execute-query:
     runs-on: ubuntu-latest
@@ -14,44 +12,47 @@ jobs:
       PUBLIC_API_KEY: ${{ secrets.PUBLIC_API_KEY }}
       PRIVATE_API_KEY: ${{ secrets.PRIVATE_API_KEY }}
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
-
     steps:
       # Step 1: Checkout the repository
       - name: Checkout Repository
         uses: actions/checkout@v4
-
+        
       # Step 2: Get the current runner IP
       - name: Get Runner IP
         id: get-ip
         run: echo "RUNNER_IP=$(curl -s https://api.ipify.org)" >> $GITHUB_ENV
-
-      # Step 3: Add Runner IP to Atlas Network Access
+        
+      # Step 3: Add Runner IP to Atlas Network Access using MongoDB Atlas GitHub Action
       - name: Add IP to MongoDB Atlas Network Access
-        run: |
-          curl -s --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
-            --digest \
-            --header "Content-Type: application/json" \
-            --request POST "https://cloud.mongodb.com/api/atlas/v1.0/groups/${PROJECT_ID}/accessList" \
-            --data @- <<- EOF
-          [{"ipAddress": "${RUNNER_IP}/32", "comment": "GitHub Actions Runner - Temporary"}]
-          EOF
-          sleep 30
-
+        uses: mongodb-labs/atlas-github-action@v1
+        with:
+          action: 'add-ip'
+          project_id: ${{ env.PROJECT_ID }}
+          api_public_key: ${{ env.PUBLIC_API_KEY }}
+          api_private_key: ${{ env.PRIVATE_API_KEY }}
+          ip_address: ${{ env.RUNNER_IP }}
+          comment: 'GitHub Actions Runner - Temporary'
+          cidr_block: 32
+          
       # Step 4: Setup MongoDB Tools
       - name: Setup MongoDB Tools
         uses: boly38/action-mongo-tools@stable
         with:
           mongo-shell: "true"
           mongo-tools: "false"
-
+          
       # Step 5: Execute Query from File
       - name: Execute Query from File
         run: mongosh "$MONGODB_URI" query.js
-
-      # Step 6: Clean up - Remove IP from Atlas Network Access
+        
+      # Step 6: Clean up - Remove IP from Atlas Network Access using MongoDB Atlas GitHub Action
       - name: Remove IP from MongoDB Atlas Network Access
         if: always()
-        run: |
-          curl -s --user "${PUBLIC_API_KEY}:${PRIVATE_API_KEY}" \
-            --digest \
-            --request DELETE "https://cloud.mongodb.com/api/atlas/v1.0/groups/${PROJECT_ID}/accessList/${RUNNER_IP}%2F32"
+        uses: mongodb-labs/atlas-github-action@v1
+        with:
+          action: 'delete-ip'
+          project_id: ${{ env.PROJECT_ID }}
+          api_public_key: ${{ env.PUBLIC_API_KEY }}
+          api_private_key: ${{ env.PRIVATE_API_KEY }}
+          ip_address: ${{ env.RUNNER_IP }}
+          cidr_block: 32
