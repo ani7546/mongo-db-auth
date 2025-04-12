@@ -1,4 +1,4 @@
-name: MongoDB Atlas Query Workflow
+name: MongoDB Atlas Query Workflow   
 
 on:
   push:
