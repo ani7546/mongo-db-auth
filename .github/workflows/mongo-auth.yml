@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  execute-query:
+  execute-query: 
     runs-on: ubuntu-latest
     
     env:
